@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "webpack",
-    "server": "webpack-dev-server"
+    "start": "webpack-dev-server"
   },
   "dependencies": {
     "webpack": "^4.0.0"

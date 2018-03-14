@@ -12,6 +12,13 @@ module.exports = {
     publicPath: "/"
   },
 
+  devServer: {
+    contentBase: path.resolve(__dirname, "dist"),
+    port: 9000,
+    compress: true,
+    open: true
+  },
+
   mode: "development",
 
   devtool: 'source-map',
