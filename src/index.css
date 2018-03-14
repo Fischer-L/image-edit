@@ -1,0 +1,72 @@
+html {
+  color: #555;
+  background: #fafbfc;
+}
+
+#img-editor {
+  width: 80%;
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 768px) {
+  #img-editor {
+    width: 99%;
+  }
+}
+
+.header {
+  width: 100%;
+  text-align: center;
+}
+
+.inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#input-file {
+  display: none;
+}
+
+.inputs__btn {
+  background: #f1f2f3;
+  border: 1px solid #eaebec;
+  padding: 0.8rem 1.2rem;
+  cursor: pointer;
+  margin: 0 8%;
+}
+
+.inputs__btn:hover {
+  background: #efefef;
+}
+
+.inputs__btn:active {
+  background: #e9e9e9;
+}
+
+.editor {
+  display: flex;
+  margin-top: 2rem;
+}
+
+#controls-panel {
+  flex: 1;
+  order: 2;
+}
+
+#img-panel {
+  flex: 3;
+  order: 1;
+  max-width: 640px;
+}
+
+#img-panel-drop-area {
+  color: #888;
+  border: 3px dashed #888;
+  width: 100%;
+  height: 320px;
+  text-align: center;
+  line-height: 320px;
+  font-size: 2rem;
+}

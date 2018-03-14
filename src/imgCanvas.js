@@ -1,0 +1,200 @@
+/**
+ * The imgCanvas in charge of appling effects on the image
+ */
+const imgCanvas = {
+  MAX_LENGTH: 640,
+
+  /**
+   * @parm outputImg {HTMLElement} The img element to hold the processed image.
+   *                               Notice: This is not the source. Set the image
+   *                               source by `setImg`
+   */
+  init(outputImg) {
+    this._outputImg = outputImg;
+    this._cvs = document.createElement("canvas");
+    this._ctx = this._cvs.getContext("2d");
+    this._outputImg.width = this._cvs.width = 480;
+    this._outputImg.height = this._cvs.height = 480;
+  },
+
+  /**
+   * Setting an image will remove the old image.
+   *
+   * @parm sourceImg {HTMLElement} The source img element
+   */
+  setImg(sourceImg) {
+    console.log("TMP> setImg", sourceImg);
+
+    let width = sourceImg.naturalWidth;
+    let height = sourceImg.naturalHeight;
+
+    let dstWidth = width;
+    let dstHeight = height;
+    if (dstWidth > this._cvs.width) {
+      dstWidth = this._cvs.width;
+      dstHeight = Math.floor(height * dstWidth / width);
+    }
+    if (dstHeight > this._cvs.height) {
+      dstHeight = this._cvs.height;
+      dstWidth = Math.floor(width * dstHeight / height)
+    }
+
+    let dstX = 0;
+    let dstY = 0;
+    if (dstWidth < this._cvs.width) {
+      dstX = Math.floor((this._cvs.width - dstWidth) / 2); 
+    }
+    if (dstHeight < this._cvs.height) {
+      dstY = Math.floor((this._cvs.height - dstHeight) / 2); 
+    }
+
+    this._source = {
+      img: sourceImg,
+      width,
+      height,
+      dstWidth,
+      dstHeight,
+      dstX,
+      dstY
+    };
+    this._drawCanvas(sourceImg, this._source);
+    this._outputImg.src = this._cvs.toDataURL();
+  },
+
+  _drawCanvas(img, dimesion, filter) {
+    let {
+      width,
+      height,
+      dstWidth,
+      dstHeight,
+      dstX,
+      dstY
+    } = dimesion;
+
+    this._ctx.clearRect(0, 0, this._cvs.width, this._cvs.height);
+    
+    if (filter) {
+      this._ctx.filter = filter;
+    }
+    
+    this._ctx.drawImage(img, 
+      // The source dimesion
+      0, 0, width, height, 
+      // The destination dimension
+      dstX, dstY, dstWidth, dstHeight);
+  },
+
+  _applyCSSFilter() {
+    if (!this._outputImg.cssFilter) {
+      return;
+    }
+    let filter = this._outputImg.cssFilter.style.filter;
+    this._drawCanvas(this._outputImg, this._source, filter);
+  },
+
+  applyDOF(focusRange) {
+    // Always apply the css filter effects first
+    // so we got them blended into our blur effect
+    this._applyCSSFilter();
+    let imgData = this._ctx.getImageData(0, 0, this._cvs.width, this._cvs.height);
+
+    if (!focusRange) {
+      focusRange = {
+        lowerY: 0.33, upperY: 0.66,
+        lowerX: 0.33, upperX: 0.66,
+      };
+    }
+
+    // Notice 1: A focus range in the depth of field effect is the convolution-skipped range.
+    //           Because we don't want it to be blur!
+    // Notice 2: Below we do 2-stage convolution so a more smooth depth of field effect.
+    let { lowerY, upperY, lowerX, upperX } = focusRange;
+    let effects = [
+      {
+        kernel: this.BLUR_KERNEL_BY_3,
+        skipRange: { lowerY, upperY, lowerX, upperX }
+      },
+      {
+        kernel: this.BLUR_KERNEL_BY_5,
+        skipRange: { 
+          lowerY: lowerY / 2,
+          upperY: (1 + upperY) / 2,
+          lowerX: lowerX / 2,
+          upperX: (1 + upperX) / 2,
+        }
+      }
+    ];
+    let newImgData = imgData;
+    effects.forEach(effect => {
+      newImgData = this._blurConvolute(newImgData, effect.kernel, effect.skipRange);
+    });
+
+    this._ctx.putImageData(newImgData, 0, 0);
+    this._outputImg.src = this._cvs.toDataURL();
+  },
+
+  BLUR_KERNEL_BY_5: [
+    0.023528, 0.033969, 0.038393, 0.033969, 0.023528,
+    0.033969, 0.049045, 0.055432, 0.049045, 0.033969,
+    0.038393, 0.055432, 0.062651, 0.055432, 0.038393,
+    0.033969, 0.049045, 0.055432, 0.049045, 0.033969,
+    0.023528, 0.033969, 0.038393, 0.033969, 0.023528,
+  ],
+
+  BLUR_KERNEL_BY_3: [
+    0.095332, 0.118095, 0.095332,
+    0.118095, 0.146293, 0.118095,
+    0.095332, 0.118095, 0.095332,
+  ],
+
+  _blurConvolute(imgData, kernel, skipRange) {
+    let w = imgData.width;
+    let h = imgData.height;
+    let src = imgData.data;
+    let lowerY = Math.floor(skipRange.lowerY * h);
+    let upperY = Math.floor(skipRange.upperY * h);
+    let lowerX = Math.floor(skipRange.lowerX * w);
+    let upperX = Math.floor(skipRange.upperX * w);
+
+    let bound = Math.sqrt(kernel.length);
+    let boundCenter = Math.floor(bound / 2);
+
+    let newImgData = this._ctx.createImageData(this._cvs.width, this._cvs.height);
+
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let dstIdx = 4* (y * w + x);
+        let r = 0, g = 0, b = 0, a = 0; // RGBA channels
+        if (lowerY <= y && y <= upperY && lowerX <= x && x <= upperX) {
+          // Don't convolute if in the skipped area
+          r = src[dstIdx];
+          g = src[dstIdx + 1];
+          b = src[dstIdx + 2];
+          a = src[dstIdx + 3];
+        } else {
+          for (let ky = 0; ky < bound; ++ky) {
+            for (let kx = 0; kx < bound; ++kx) {
+              let yConvoluted = y + ky - boundCenter;
+              let xConvoluted = x + kx - boundCenter;
+              if (0 <= yConvoluted && yConvoluted < h && 0 <= xConvoluted && xConvoluted < w) {
+                let srcIdx = 4 * (yConvoluted * w + xConvoluted);
+                let weight = kernel[ky * bound + kx];
+                r += src[srcIdx] * weight;
+                g += src[srcIdx+1] * weight;
+                b += src[srcIdx+2] * weight;
+                a += src[srcIdx+3] * weight;
+              }
+            }
+          }
+        }
+        newImgData.data[dstIdx] = r;
+        newImgData.data[dstIdx + 1] = g;
+        newImgData.data[dstIdx + 2] = b;
+        newImgData.data[dstIdx + 3] = a;
+      }
+    }
+    return newImgData;
+  }
+};
+
+export default imgCanvas;

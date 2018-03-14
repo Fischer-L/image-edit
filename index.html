@@ -7,8 +7,29 @@
 </head>
 
 <body>
-  Image Edit
-  <script type="text/javascript" src="./index.bundle.js"></script>
+
+  <div id="img-editor">
+    <h1 class="header">Simple Image Editor</h1>
+    <section class="inputs">
+      <button id="url-input-btn" class="inputs__btn">Import from URL</button>
+      <button id="file-input-btn" class="inputs__btn">Upload from File</button>
+      <input id="input-file" type="file" accept="image/*" />
+    </section>
+
+    <section class="editor">
+      <div id="controls-panel" class="editor__panel">
+        
+      </div>
+      <div id="img-panel" class="editor__panel">
+        <div id="img-panel-drop-area">
+          Or drop your image here!
+        </div>
+        <img id="img-panel-output-img"></img>
+      </div>
+    </section>
+  </div>
+
+  <script src="index.bundle.js"></script>
 </body> 
 
 </html>

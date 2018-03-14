@@ -3,7 +3,6 @@ var path = require("path");
 module.exports = {
   entry: {
    index: "./src/index.js",
-   xss: "./src/xss.js" 
   },
   
   output: {
@@ -13,15 +12,14 @@ module.exports = {
   },
 
   devServer: {
-    contentBase: path.resolve(__dirname, "dist"),
     port: 9000,
     compress: true,
     open: true
   },
+  
+  devtool: 'source-map',
 
   mode: "development",
-
-  devtool: 'source-map',
 
   module: {
     rules: [
