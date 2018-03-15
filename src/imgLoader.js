@@ -12,7 +12,7 @@ const imgLoader  = {
     this._img = null;
     this._listener = listener;
     this._inputFile = imgEditor.querySelector("#input-file");
-    this._imgDropArea = imgEditor.querySelector("#img-panel-drop-area");
+    this._imgDropArea = imgEditor.querySelector("#img-panel__drop-area");
 
     imgEditor.addEventListener("click", e => this._handleClick(e));
 
@@ -74,7 +74,13 @@ const imgLoader  = {
     if (!file || !file.type.match("image/*")) {
       return;
     }
+    // A workaound for Chrome:
+    // User uploads the a.jpg and apply wrong effects, then re-uploads the a.jpg.
+    // In this case Chrome won't fire the change event on the file input (FF does).
+    // We have change the type so the next time the change will be invoked.
+    this._inputFile.type = "hidden";
     this._createImg(URL.createObjectURL(file));
+    this._inputFile.type = "file";
   },
 };
 

@@ -2,7 +2,7 @@
  * The imgCanvas in charge of appling effects on the image
  */
 const imgCanvas = {
-  MAX_LENGTH: 640,
+  MAX_SIZE: 480,
 
   /**
    * @parm outputImg {HTMLElement} The img element to hold the processed image.
@@ -13,8 +13,6 @@ const imgCanvas = {
     this._outputImg = outputImg;
     this._cvs = document.createElement("canvas");
     this._ctx = this._cvs.getContext("2d");
-    this._outputImg.width = this._cvs.width = 480;
-    this._outputImg.height = this._cvs.height = 480;
   },
 
   /**
@@ -30,22 +28,13 @@ const imgCanvas = {
 
     let dstWidth = width;
     let dstHeight = height;
-    if (dstWidth > this._cvs.width) {
-      dstWidth = this._cvs.width;
+    if (dstWidth > this.MAX_SIZE) {
+      dstWidth = this.MAX_SIZE;
       dstHeight = Math.floor(height * dstWidth / width);
     }
-    if (dstHeight > this._cvs.height) {
-      dstHeight = this._cvs.height;
+    if (dstHeight > this.MAX_SIZE) {
+      dstHeight = this.MAX_SIZE;
       dstWidth = Math.floor(width * dstHeight / height)
-    }
-
-    let dstX = 0;
-    let dstY = 0;
-    if (dstWidth < this._cvs.width) {
-      dstX = Math.floor((this._cvs.width - dstWidth) / 2); 
-    }
-    if (dstHeight < this._cvs.height) {
-      dstY = Math.floor((this._cvs.height - dstHeight) / 2); 
     }
 
     this._source = {
@@ -54,24 +43,22 @@ const imgCanvas = {
       height,
       dstWidth,
       dstHeight,
-      dstX,
-      dstY
     };
     this._drawCanvas(sourceImg, this._source);
     this._outputImg.src = this._cvs.toDataURL();
   },
 
-  _drawCanvas(img, dimesion, filter) {
+  _drawCanvas(img, sizes, filter) {
     let {
       width,
       height,
       dstWidth,
       dstHeight,
-      dstX,
-      dstY
-    } = dimesion;
+    } = sizes;
 
     this._ctx.clearRect(0, 0, this._cvs.width, this._cvs.height);
+    this._cvs.width = dstWidth;
+    this._cvs.height = dstHeight;
     
     if (filter) {
       this._ctx.filter = filter;
@@ -81,7 +68,7 @@ const imgCanvas = {
       // The source dimesion
       0, 0, width, height, 
       // The destination dimension
-      dstX, dstY, dstWidth, dstHeight);
+      0, 0, dstWidth, dstHeight);
   },
 
   _applyCSSFilter() {
@@ -92,23 +79,27 @@ const imgCanvas = {
     this._drawCanvas(this._outputImg, this._source, filter);
   },
 
+  /**
+   * @param focusRange {Array} Shall be [lowerX, upperX, lowerY, upperY].
+   *                           For example [0.3, 0.6, 0.3, 0.6] means
+   *                           focus within the area of 30% ~ 60% on the x axis and
+   *                           30% ~ 60% on the y axis.
+   */
   applyDOF(focusRange) {
+    console.log("TMP> applyDOF", focusRange);
     // Always apply the css filter effects first
     // so we got them blended into our blur effect
     this._applyCSSFilter();
     let imgData = this._ctx.getImageData(0, 0, this._cvs.width, this._cvs.height);
 
     if (!focusRange) {
-      focusRange = {
-        lowerY: 0.33, upperY: 0.66,
-        lowerX: 0.33, upperX: 0.66,
-      };
+      focusRange = [0.3, 0.6, 0.3, 0.6];
     }
 
     // Notice 1: A focus range in the depth of field effect is the convolution-skipped range.
     //           Because we don't want it to be blur!
     // Notice 2: Below we do 2-stage convolution so a more smooth depth of field effect.
-    let { lowerY, upperY, lowerX, upperX } = focusRange;
+    let [lowerX, upperX, lowerY, upperY] = focusRange;
     let effects = [
       {
         kernel: this.BLUR_KERNEL_BY_3,

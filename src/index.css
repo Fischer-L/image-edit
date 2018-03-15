@@ -1,17 +1,15 @@
+* {
+  box-sizing: border-box;
+}
+
 html {
   color: #555;
   background: #fafbfc;
 }
 
 #img-editor {
-  width: 80%;
+  width: 720px;
   margin: 0 auto;
-}
-
-@media screen and (max-width: 768px) {
-  #img-editor {
-    width: 99%;
-  }
 }
 
 .header {
@@ -45,7 +43,8 @@ html {
   background: #e9e9e9;
 }
 
-.editor {
+.panels {
+  width: 100%;
   display: flex;
   margin-top: 2rem;
 }
@@ -56,12 +55,12 @@ html {
 }
 
 #img-panel {
-  flex: 3;
+  flex: 2;
   order: 1;
-  max-width: 640px;
+  position: relative;
 }
 
-#img-panel-drop-area {
+#img-panel__drop-area {
   color: #888;
   border: 3px dashed #888;
   width: 100%;
@@ -69,4 +68,20 @@ html {
   text-align: center;
   line-height: 320px;
   font-size: 2rem;
+}
+
+.img-panel--center {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#img-panel__cover_area {
+  opacity: 0.33;
+  background: #000;
+}
+
+.no-display {
+  display: none;
 }

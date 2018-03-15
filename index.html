@@ -16,15 +16,30 @@
       <input id="input-file" type="file" accept="image/*" />
     </section>
 
-    <section class="editor">
-      <div id="controls-panel" class="editor__panel">
-        
-      </div>
-      <div id="img-panel" class="editor__panel">
-        <div id="img-panel-drop-area">
+    <section class="panels">
+      <div id="img-panel">
+        <div id="img-panel__drop-area">
           Or drop your image here!
         </div>
-        <img id="img-panel-output-img"></img>
+        <img id="img-panel-output-img" class="img-panel--center no-display">
+
+        <!-- We utilize #img-panel-mask-img to put a semi-transparent black mask
+             over #img-panel-output-img and #img-panel-cover-img to cover an image
+             for clipping or loadding indication. Why not do this through canvas?
+             Because:
+             1. if we did this on the same canvas for #img-panel-output-img,
+                we'd have to take extra care to not ruin our effects on #img-panel-output-img.
+             2. if we did this with another canvas, we'd have to draw canvas with a lot of js,
+                which is a bit complex and not perfomance friendly for such a little job.
+             With css, we can make things simpler
+             and let browsers to do some css optimization on their own.
+        -->
+        <div id="img-panel__cover_area" class="img-panel--center no-display" draggable="false">
+          <img id="img-panel-cover-img" draggable="false">
+        </div>
+      </div>
+      <div id="controls-panel">
+        <button id="select-btn">Select</button>
       </div>
     </section>
   </div>
