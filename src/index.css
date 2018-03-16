@@ -95,13 +95,13 @@ html {
   margin-bottom: 1rem;
 }
 
-.effect-title {
+.control-title {
   margin: 0;
   margin-bottom: 0.5rem;
 }
 
-.control__btn,
-.control__input {
+.control-btn,
+.control-input {
   margin: 0;
   width: 100%;
 }

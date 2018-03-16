@@ -26,7 +26,7 @@ const imgEditor = {
   },
 
   _resetControlPanel() {
-    let inputs = this._controlPanel.querySelectorAll(".control__input");
+    let inputs = this._controlPanel.querySelectorAll(".control-input");
     for (let input of inputs) {
       input.value = input.min;
     }
@@ -40,6 +40,10 @@ const imgEditor = {
 
       case "effect-dof":
         this._selectImgRange(range => this.applyDOF(range));
+        return;
+
+      case "download":
+        this.download();
         return;
     }
   },
@@ -64,10 +68,29 @@ const imgEditor = {
 
   onImgLoaded(img) {
     this._resetControlPanel();
+    this._sourceImg = img;
     this._imgCanvas.setImg(img);
     this._dropArea.classList.add("no-display");
     this._outputImg.classList.remove("no-display");
     window._imgCanvas = this._imgCanvas;
+  },
+
+  async download() {
+    let blob = await this._imgCanvas.toBlob();
+    if (!blob) {
+      return;
+    }
+
+    let link = this._controlPanel.querySelector("#download-link");
+    link.href = URL.createObjectURL(blob);
+    link.download = Date.now() + ".jpg";
+    // Remember to release the blob we don't like the memory leak.
+    window.setTimeout(() => {
+      URL.revokeObjectURL(link.href);
+      link.href = "";
+      link = null;
+    }, 150000);
+    link.click();
   },
 
   _applyFilterChange(input) {

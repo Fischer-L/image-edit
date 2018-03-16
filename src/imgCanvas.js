@@ -47,6 +47,27 @@ const imgCanvas = {
     this._cssFilters.clear();
     this._drawCanvas(sourceImg, dimension);
     this._drawToImg();
+    this._sourceImg = sourceImg;
+  },
+
+  toBlob() {
+    return new Promise(resolve => {
+      if (!this._sourceImg) {
+        resolve(null);
+        return;
+      }
+      window.requestIdleCallback(() => {
+        let filter = this._outputImg.style.filter;
+        let outputCtx = document.createElement("canvas").getContext("2d");
+        outputCtx.canvas.width = this._cvs.width;
+        outputCtx.canvas.height = this._cvs.height;
+        if (filter) {
+          outputCtx.filter = filter;
+        }
+        outputCtx.drawImage(this._cvs, 0, 0);
+        outputCtx.canvas.toBlob(blob => resolve(blob));
+      });
+    });
   },
 
   _drawCanvas(img, dimension, filter) {
@@ -62,10 +83,6 @@ const imgCanvas = {
     this._ctx.clearRect(0, 0, this._cvs.width, this._cvs.height);
     this._cvs.width = dstWidth;
     this._cvs.height = dstHeight;
-    
-    if (filter) {
-      this._ctx.filter = filter;
-    }
     this._ctx.drawImage(img, 
       // The source dimesion
       srcX, srcY, srcWidth, srcHeight, 
