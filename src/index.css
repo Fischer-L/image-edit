@@ -49,7 +49,7 @@ html {
   margin-top: 2rem;
 }
 
-#controls-panel {
+#control-panel {
   flex: 1;
   order: 2;
 }
@@ -82,12 +82,12 @@ html {
   background: #000;
 }
 
-#controls-panel {
+#control-panel {
   padding: 0;
   margin: 0;
 }
 
-.controls-panel__effect {
+.control-panel__control {
   list-style: none;
   padding: 0;
   padding-left: 2.5rem;
@@ -100,7 +100,8 @@ html {
   margin-bottom: 0.5rem;
 }
 
-.effect-btn {
+.control__btn,
+.control__input {
   margin: 0;
   width: 100%;
 }

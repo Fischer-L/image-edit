@@ -13,6 +13,7 @@ const imgCanvas = {
     this._outputImg = outputImg;
     this._cvs = document.createElement("canvas");
     this._ctx = this._cvs.getContext("2d");
+    this._cssFilters = new Map();
   },
 
   /**
@@ -46,7 +47,7 @@ const imgCanvas = {
       dstHeight,
     };
     this._drawCanvas(sourceImg, dimension);
-    this._outputImg.src = this._cvs.toDataURL();
+    this._drawToImg();
   },
 
   _drawCanvas(img, dimension, filter) {
@@ -74,14 +75,32 @@ const imgCanvas = {
       0, 0, dstWidth, dstHeight);
   },
 
-  _applyCSSFilter() {
-    if (!this._outputImg.cssFilter) {
-      return;
-    }
-    let filter = this._outputImg.cssFilter.style.filter;
-    this._drawCanvas(this._outputImg, this._source, filter);
+  _drawToImg() {
+    this._outputImg.src = this._cvs.toDataURL();
+    this._applyCSSFilter();
   },
 
+  _applyCSSFilter() {
+    if (this._cssFilters.size) {
+      let rules = [];
+      this._cssFilters.forEach((lv, effect) => {
+        rules += `${effect}(${lv}%) `;
+      });
+      console.log("TMP> rules", rules);
+      this._outputImg.style.filter = rules;
+    }
+  },
+
+  /**
+   * @param lv {Number} the effect level from 0 ~ 1
+   */
+  applySepia(lv) {
+    lv = lv * 100;
+    if (lv != this._cssFilters.get("sepia")) {
+      this._cssFilters.set("sepia", lv);
+      this._applyCSSFilter();
+    }
+  },
 
   /**
    * @param range {Array} Shall be [lowerX, upperX, lowerY, upperY].
@@ -102,7 +121,7 @@ const imgCanvas = {
     dimension.dstWidth = dimension.srcWidth;
     dimension.dstHeight = dimension.srcHeight;
     this._drawCanvas(this._outputImg, dimension);
-    this._outputImg.src = this._cvs.toDataURL();
+    this._drawToImg();
   },
 
   /**
@@ -112,9 +131,6 @@ const imgCanvas = {
    *                           30% ~ 60% on the y axis.
    */
   applyDOF(focusRange) {
-    // Always apply the css filter effects first
-    // so we got them blended into our blur effect
-    this._applyCSSFilter();
     let imgData = this._ctx.getImageData(0, 0, this._cvs.width, this._cvs.height);
 
     if (!focusRange) {
@@ -146,7 +162,7 @@ const imgCanvas = {
     });
 
     this._ctx.putImageData(newImgData, 0, 0);
-    this._outputImg.src = this._cvs.toDataURL();
+    this._drawToImg();
   },
 
   BLUR_KERNEL_BY_5: [

@@ -4,54 +4,81 @@ import imgLoader from "./imgLoader";
 import imgCanvas from "./imgCanvas";
 
 const imgEditor = {
-  init() {
+  init(imgCanvas, imgLoader) {
     this._imgEditor = document.querySelector("#img-editor");
+    this._controlPanel = this._imgEditor.querySelector("#control-panel");
     this._coverArea = this._imgEditor.querySelector("#img-panel__cover_area");
     this._coverImg = this._imgEditor.querySelector("#img-panel-cover-img");
     this._outputImg = this._imgEditor.querySelector("#img-panel-output-img");
     this._dropArea = this._imgEditor.querySelector("#img-panel__drop-area");
-    imgCanvas.init(this._outputImg);
-    imgLoader.init(this._imgEditor, this);
 
-    this._imgEditor.addEventListener("click", e => this.onClick(e));
+    this._imgCanvas = imgCanvas;
+    this._imgCanvas.init(this._outputImg);
+    this._imgLoader = imgLoader;
+    this._imgLoader.init(this._imgEditor, this);
 
-    let tmp_selectBtn = this._imgEditor.querySelector("#select-btn");
-    tmp_selectBtn.addEventListener("click", e => this._startSelectImgRange());
+    this._controlPanel.addEventListener("click", e => this.onClick(e));
+    this._controlPanel.addEventListener("mousedown", e => this.onMousedown(e));
+
+    this._resetControlPanel();
     window._imgEditor = imgEditor;
+  },
+
+  _resetControlPanel() {
+    let inputs = this._controlPanel.querySelectorAll(".control__input");
+    for (let input of inputs) {
+      input.value = input.min;
+    }
   },
 
   onClick(e) {
     switch (e.target.id) {
-      case "effect-crop-btn":
+      case "effect-crop":
         this.cropImg();
         return;
 
-      case "effect-dof-btn":
-        this.applyDOF()
+      case "effect-dof":
+        this.applyDOF();
+        return;
+    }
+  },
+
+  onMousedown(e) {
+    switch (e.target.id) {
+      case "effect-sepia":
+        this._startTrackFilterChange("effect-sepia", e.target);
         return;
     }
   },
 
   onImgLoaded(img) {
-    imgCanvas.setImg(img);
+    this._imgCanvas.setImg(img);
     this._dropArea.classList.add("no-display");
     this._outputImg.classList.remove("no-display");
-
-    window._imgCanvas = imgCanvas;
+    this._resetControlPanel();
+    window._imgCanvas = this._imgCanvas;
   },
 
-  async cropImg() {
-    let range = await this._selectImgRange();
-    if (range) {
-      imgCanvas.cropImg(range);
+  _startTrackFilterChange(effectType, input) {
+    if (this._trackFilterChange) {
+      return; // Already tracking
     }
-  },
 
-  async applyDOF() {
-    let focusRange = await this._selectImgRange();
-    if (focusRange) {
-      imgCanvas.applyDOF(focusRange);
-    }
+    this._trackFilterChange = () => {
+      switch (effectType) {
+        case "effect-sepia":
+          this.applySepia(input.value);
+          return;
+      }
+    };
+    input.addEventListener("mousemove", this._trackFilterChange);
+
+    this._stopTrackFilterChange = () => {
+      input.removeEventListener("mousemove", this._trackFilterChange);
+      input.removeEventListener("mouseup", this._stopTrackFilterChange);
+      this._trackFilterChange = this._stopTrackFilterChange;
+    };
+    input.addEventListener("mouseup", this._stopTrackFilterChange);
   },
 
   _showCoverImg(src, w, h) {
@@ -134,6 +161,28 @@ const imgEditor = {
     let upperY = Math.max(startY, endY);
     return [lowerX, upperX, lowerY, upperY];
   },
+
+  async cropImg() {
+    window.requestAnimationFrame(async () => {
+      let range = await this._selectImgRange();
+      if (range) {
+        this._imgCanvas.cropImg(range);
+      }
+    });
+  },
+
+  async applyDOF() {
+    window.requestAnimationFrame(async () => {
+      let focusRange = await this._selectImgRange();
+      if (focusRange) {
+        this._imgCanvas.applyDOF(focusRange);
+      }
+    });
+  },
+
+  applySepia(lv) {
+    window.requestAnimationFrame(() => this._imgCanvas.applySepia(lv));
+  },
 };
 
-imgEditor.init();
+imgEditor.init(imgCanvas, imgLoader);
