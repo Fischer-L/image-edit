@@ -22,8 +22,6 @@ const imgCanvas = {
    * @parm sourceImg {HTMLElement} The source img element
    */
   setImg(sourceImg) {
-    console.log("TMP> setImg", sourceImg);
-
     let srcWidth = sourceImg.naturalWidth;
     let srcHeight = sourceImg.naturalHeight;
 
@@ -46,6 +44,7 @@ const imgCanvas = {
       dstWidth,
       dstHeight,
     };
+    this._cssFilters.clear();
     this._drawCanvas(sourceImg, dimension);
     this._drawToImg();
   },
@@ -67,7 +66,6 @@ const imgCanvas = {
     if (filter) {
       this._ctx.filter = filter;
     }
-    console.log("TMp> _drawCanvas", img.src);
     this._ctx.drawImage(img, 
       // The source dimesion
       srcX, srcY, srcWidth, srcHeight, 
@@ -86,8 +84,9 @@ const imgCanvas = {
       this._cssFilters.forEach((lv, effect) => {
         rules += `${effect}(${lv}%) `;
       });
-      console.log("TMP> rules", rules);
       this._outputImg.style.filter = rules;
+    } else {
+      this._outputImg.style.filter = "";
     }
   },
 

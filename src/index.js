@@ -63,10 +63,10 @@ const imgEditor = {
   },
 
   onImgLoaded(img) {
+    this._resetControlPanel();
     this._imgCanvas.setImg(img);
     this._dropArea.classList.add("no-display");
     this._outputImg.classList.remove("no-display");
-    this._resetControlPanel();
     window._imgCanvas = this._imgCanvas;
   },
 
