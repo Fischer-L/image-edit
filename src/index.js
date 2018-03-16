@@ -30,10 +30,22 @@ const imgEditor = {
     for (let input of inputs) {
       input.value = input.min;
     }
+
+    let dofControl = this._controlPanel.querySelector("#effect-dof").parentNode;
+    let downloadControl = this._controlPanel.querySelector("#download").parentNode;
+    if (this._source && this._source.isCORS) {
+      // If it is a CORS source, our canvas usage is restricted.
+      // So we don't support the download and the dof efect
+      dofControl.classList.add("no-display");
+      downloadControl.classList.add("no-display");
+    } else {
+      dofControl.classList.remove("no-display");
+      downloadControl.classList.remove("no-display");
+    }
   },
 
   onClick(e) {
-    if (!this._sourceImg) {
+    if (!this._source) {
       return;
     }
 
@@ -53,7 +65,7 @@ const imgEditor = {
   },
 
   onChange(e) {
-    if (!this._sourceImg) {
+    if (!this._source) {
       return;
     }
 
@@ -66,7 +78,7 @@ const imgEditor = {
   },
 
   onMousedown(e) {
-    if (!this._sourceImg) {
+    if (!this._source) {
       return;
     }
     
@@ -78,12 +90,12 @@ const imgEditor = {
     }
   },
 
-  onImgLoaded(img) {
-    this._resetControlPanel();
-    this._sourceImg = img;
-    this._imgCanvas.setImg(img);
+  onImgLoaded(source) {
+    this._source = source;
+    this._imgCanvas.setSource(source);
     this._dropArea.classList.add("no-display");
     this._outputImg.classList.remove("no-display");
+    this._resetControlPanel();
     window._imgCanvas = this._imgCanvas;
   },
 
@@ -133,10 +145,11 @@ const imgEditor = {
     input.addEventListener("mouseup", this._stopTrackFilterChange);
   },
 
-  _showCoverImg(src, w, h) {
+  _showCoverImg(img, w, h) {
+    this._coverImg.src = img.src;
     this._coverImg.style.width = this._coverArea.style.width = w + "px";
     this._coverImg.style.height = this._coverArea.style.height = h + "px";
-    this._coverImg.src = src;
+    this._coverArea.style.clipPath = img.style.clipPath;
     this._coverArea.classList.remove("no-display");
   },
 
@@ -170,7 +183,7 @@ const imgEditor = {
       };
       this._coverArea.addEventListener("mousedown", this._pickSelectRangeOrign);
       this._coverImg.style.clipPath = "polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)";
-      this._showCoverImg(this._outputImg.src, totalWidth, totalHeight);
+      this._showCoverImg(this._outputImg, totalWidth, totalHeight);
     });
 
     return this._detectRangeOnMousemove(...pos);

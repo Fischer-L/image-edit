@@ -5,8 +5,7 @@ const imgLoader  = {
   /**
    * @param imgEditor {HTMLELement} the #img-editor element
    * @param listener {Object} an object with the `onImgLoaded` method.
-   *                          When an new image is loaded, 
-   *                          the method will be called with the image loaded.
+   *                          When an new image is loaded, the method will be called with the source loaded.
    */
   init(imgEditor, listener) {
     this._img = null;
@@ -49,12 +48,15 @@ const imgLoader  = {
     }
   },
 
-  _createImg(url) {
+  _createImg(url, isCORS) {
     let img = new Image();
     img.onload = () => {
       console.log("TMP> Image Created");
       img.onload = null;
-      this._listener.onImgLoaded(img);
+      // If the image is from the internet,
+      // the usage of canvas with image will be restricted because of CORS.
+      // Expose this info to let outside know.
+      this._listener.onImgLoaded({ img, isCORS });
     };
     img.src = url;
   },
@@ -67,7 +69,7 @@ const imgLoader  = {
     }
     // An new image coming, release the old one in case the memory leak
     this._revokeImgObjURL();
-    this._createImg(url);
+    this._createImg(url, true);
   },
 
   _handleInputFromFile(e) {
@@ -84,7 +86,7 @@ const imgLoader  = {
     // In this case Chrome won't fire the change event on the file input (FF does).
     // We have change the type so the next time the change will be invoked.
     this._inputFile.type = "hidden";
-    this._createImg(this._imgObjURL);
+    this._createImg(this._imgObjURL, false);
     this._inputFile.type = "file";
   },
 

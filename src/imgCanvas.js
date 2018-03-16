@@ -7,7 +7,7 @@ const imgCanvas = {
   /**
    * @parm outputImg {HTMLElement} The img element to hold the processed image.
    *                               Notice: This is not the source. Set the image
-   *                               source by `setImg`
+   *                               source by `setSource`
    */
   init(outputImg) {
     this._outputImg = outputImg;
@@ -19,11 +19,11 @@ const imgCanvas = {
   /**
    * Setting an image will remove the old image.
    *
-   * @parm sourceImg {HTMLElement} The source img element
+   * @parm source {Object} The img source
    */
-  setImg(sourceImg) {
-    let srcWidth = sourceImg.naturalWidth;
-    let srcHeight = sourceImg.naturalHeight;
+  setSource(source) {
+    let srcWidth = source.img.naturalWidth;
+    let srcHeight = source.img.naturalHeight;
 
     let dstWidth = srcWidth;
     let dstHeight = srcHeight;
@@ -44,15 +44,28 @@ const imgCanvas = {
       dstWidth,
       dstHeight,
     };
+    
+    this._source = source;
+    // Remembe to clear the old styles
     this._cssFilters.clear();
-    this._drawCanvas(sourceImg, dimension);
-    this._drawToImg();
-    this._sourceImg = sourceImg;
+    this._outputImg.style.clipPath = "";
+
+    if (!this._source.isCORS) {
+      this._drawCanvas(source.img, dimension);
+    }
+    this._drawToImg(dstWidth, dstHeight);
   },
 
+  /**.
+   * @return {Promise} Once done, the promise will be resolved with the blob data 
+   *                   of the processed image pulled from the canvas.
+   *                   Null will be resolved if unable to pull the image blob.
+   *                   Notice: unable to pull the blob if the source image is a CORS source.
+   *
+   */
   toBlob() {
     return new Promise(resolve => {
-      if (!this._sourceImg) {
+      if (!this._source || this._source.isCORS) {
         resolve(null);
         return;
       }
@@ -90,8 +103,14 @@ const imgCanvas = {
       0, 0, dstWidth, dstHeight);
   },
 
-  _drawToImg() {
-    this._outputImg.src = this._cvs.toDataURL();
+  _drawToImg(w, h) {
+    this._outputImg.width = w; //this._cvs.width;
+    this._outputImg.height = h; //this._cvs.height;
+    // If the source is from the internel,
+    // we can't extract image data from the canvas because of the CORS policy.
+    // So use the regular img source instead.
+    this._outputImg.src = 
+      this._source.isCORS ? this._source.img.src : this._cvs.toDataURL();
     this._applyCSSFilter();
   },
 
@@ -111,7 +130,7 @@ const imgCanvas = {
    * @param lv {Number} the effect level from 0 ~ 1
    */
   applyGrayScale(lv) {
-    if (!this._sourceImg) {
+    if (!this._source) {
       return;
     }
 
@@ -126,7 +145,7 @@ const imgCanvas = {
    * @param lv {Number} the effect level from 0 ~ 1
    */
   applySepia(lv) {
-    if (!this._sourceImg) {
+    if (!this._source) {
       return;
     }
 
@@ -144,7 +163,16 @@ const imgCanvas = {
    *                           30% ~ 60% on the y axis.
    */
   cropImg(range) {
-    if (!this._sourceImg) {
+    if (!this._source) {
+      return;
+    }
+
+    // Because of CORS, we can't do advanced canvas operation.
+    // So simply fall back to the css solution
+    if (this._source.isCORS) {
+      let [lowerX, upperX, lowerY, upperY] = range.map(bound => bound * 100 + "%");
+      this._outputImg.style.clipPath =
+        `polygon(${lowerX} ${lowerY}, ${upperX} ${lowerY}, ${upperX} ${upperY}, ${lowerX} ${upperY})`;
       return;
     }
 
@@ -160,17 +188,19 @@ const imgCanvas = {
     dimension.dstWidth = dimension.srcWidth;
     dimension.dstHeight = dimension.srcHeight;
     this._drawCanvas(this._outputImg, dimension);
-    this._drawToImg();
+    this._drawToImg(dimension.dstWidth, dimension.dstHeight);
   },
 
   /**
+   * Notice: If the source image is a CORS source, applying this effect is an no-op.
+   *
    * @param focusRange {Array} Shall be [lowerX, upperX, lowerY, upperY].
    *                           For example [0.3, 0.6, 0.3, 0.6] means
    *                           focus within the area of 30% ~ 60% on the x axis and
    *                           30% ~ 60% on the y axis.
    */
   applyDOF(focusRange) {
-    if (!this._sourceImg) {
+    if (!this._source || this._source.isCORS) {
       return;
     }
     
@@ -205,7 +235,7 @@ const imgCanvas = {
     });
 
     this._ctx.putImageData(newImgData, 0, 0);
-    this._drawToImg();
+    this._drawToImg(this._cvs.width, this._cvs.height);
   },
 
   BLUR_KERNEL_BY_5: [
