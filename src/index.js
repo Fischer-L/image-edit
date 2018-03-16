@@ -18,6 +18,7 @@ const imgEditor = {
     this._imgLoader.init(this._imgEditor, this);
 
     this._controlPanel.addEventListener("click", e => this.onClick(e));
+    this._controlPanel.addEventListener("change", e => this.onChange(e));
     this._controlPanel.addEventListener("mousedown", e => this.onMousedown(e));
 
     this._resetControlPanel();
@@ -34,11 +35,19 @@ const imgEditor = {
   onClick(e) {
     switch (e.target.id) {
       case "effect-crop":
-        this.cropImg();
+        this._selectImgRange(range => this.cropImg(range));
         return;
 
       case "effect-dof":
-        this.applyDOF();
+        this._selectImgRange(range => this.applyDOF(range));
+        return;
+    }
+  },
+
+  onChange(e) {
+    switch (e.target.id) {
+      case "effect-sepia":
+        this._applyFilterChange(e.target);
         return;
     }
   },
@@ -46,7 +55,7 @@ const imgEditor = {
   onMousedown(e) {
     switch (e.target.id) {
       case "effect-sepia":
-        this._startTrackFilterChange("effect-sepia", e.target);
+        this._trackFilterChange(e.target);
         return;
     }
   },
@@ -59,24 +68,26 @@ const imgEditor = {
     window._imgCanvas = this._imgCanvas;
   },
 
-  _startTrackFilterChange(effectType, input) {
-    if (this._trackFilterChange) {
+  _applyFilterChange(input) {
+    switch (input.id) {
+      case "effect-sepia":
+        this.applySepia(input.value);
+        return;
+    }
+  },
+
+  _trackFilterChange(input) {
+    if (this._onUserDragInput) {
       return; // Already tracking
     }
 
-    this._trackFilterChange = () => {
-      switch (effectType) {
-        case "effect-sepia":
-          this.applySepia(input.value);
-          return;
-      }
-    };
-    input.addEventListener("mousemove", this._trackFilterChange);
+    this._onUserDragInput = () => this._applyFilterChange(input);
+    input.addEventListener("mousemove", this._onUserDragInput);
 
     this._stopTrackFilterChange = () => {
-      input.removeEventListener("mousemove", this._trackFilterChange);
+      input.removeEventListener("mousemove", this._onUserDragInput);
       input.removeEventListener("mouseup", this._stopTrackFilterChange);
-      this._trackFilterChange = this._stopTrackFilterChange;
+      this._onUserDragInput = this._stopTrackFilterChange = null;
     };
     input.addEventListener("mouseup", this._stopTrackFilterChange);
   },
@@ -92,7 +103,19 @@ const imgEditor = {
     this._coverArea.classList.add("no-display");
   },
 
-  async _selectImgRange() {
+  async _selectImgRange(onSelect) {
+    if (this._selectRangePromise) {
+      return; // Already tracking
+    }
+    this._selectRangePromise = this._trackImgSelectRange();
+    let range = await this._selectRangePromise;
+    if (range) {
+      onSelect(range);
+    }
+    this._selectRangePromise = null;
+  },
+
+  async _trackImgSelectRange() {
     if (this._pickSelectRangeOrign) {
       return; // Already start
     }
@@ -133,10 +156,10 @@ const imgEditor = {
       };
       this._coverArea.addEventListener("mousemove", this._drawImgSelectRange);
       
-      this._endSelectImgRange = e => {
+      this._stopTrackImgSelectRange = e => {
         this._coverArea.removeEventListener("mousemove", this._drawImgSelectRange);
-        this._coverArea.removeEventListener("mouseup", this._endSelectImgRange);
-        this._pickSelectRangeOrign = this._drawImgSelectRange = this._endSelectImgRange = null;
+        this._coverArea.removeEventListener("mouseup", this._stopTrackImgSelectRange);
+        this._pickSelectRangeOrign = this._drawImgSelectRange = this._stopTrackImgSelectRange = null;
 
         let range = this._computeSelectRange(
           totalWidth, totalHeight, [originX, originY], [e.offsetX, e.offsetY]);
@@ -144,7 +167,7 @@ const imgEditor = {
         this._hideCoverImg();
         resolve(range);
       };
-      this._coverArea.addEventListener("mouseup", this._endSelectImgRange);
+      this._coverArea.addEventListener("mouseup", this._stopTrackImgSelectRange);
     });
   },
 
@@ -162,22 +185,12 @@ const imgEditor = {
     return [lowerX, upperX, lowerY, upperY];
   },
 
-  async cropImg() {
-    window.requestAnimationFrame(async () => {
-      let range = await this._selectImgRange();
-      if (range) {
-        this._imgCanvas.cropImg(range);
-      }
-    });
+  cropImg(range) {
+    window.requestAnimationFrame(() => this._imgCanvas.cropImg(range));
   },
 
-  async applyDOF() {
-    window.requestAnimationFrame(async () => {
-      let focusRange = await this._selectImgRange();
-      if (focusRange) {
-        this._imgCanvas.applyDOF(focusRange);
-      }
-    });
+  applyDOF(range) {
+    window.requestAnimationFrame(() => this._imgCanvas.applyDOF(range));
   },
 
   applySepia(lv) {
