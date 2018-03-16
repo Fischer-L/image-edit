@@ -53,9 +53,10 @@ const imgLoader  = {
     img.onload = () => {
       console.log("TMP> Image Created");
       img.onload = null;
+      // Expose this CORS info to let outside know.
       // If the image is from the internet,
       // the usage of canvas with image will be restricted because of CORS.
-      // Expose this info to let outside know.
+      // See: https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image
       this._listener.onImgLoaded({ img, isCORS });
     };
     img.src = url;
