@@ -65,6 +65,8 @@ const imgLoader  = {
     if (!url || url.search(reg) !== 0) {
       return;
     }
+    // An new image coming, release the old one in case the memory leak
+    this._revokeImgObjURL();
     this._createImg(url);
   },
 
@@ -74,14 +76,24 @@ const imgLoader  = {
     if (!file || !file.type.match("image/*")) {
       return;
     }
+    // An new image coming, release the old one in case the memory leak
+    this._revokeImgObjURL();
+    this._imgObjURL = URL.createObjectURL(file);
     // A workaound for Chrome:
     // User uploads the a.jpg and apply wrong effects, then re-uploads the a.jpg.
     // In this case Chrome won't fire the change event on the file input (FF does).
     // We have change the type so the next time the change will be invoked.
     this._inputFile.type = "hidden";
-    this._createImg(URL.createObjectURL(file));
+    this._createImg(this._imgObjURL);
     this._inputFile.type = "file";
   },
+
+  _revokeImgObjURL() {
+    if (this._imgObjURL) {
+      URL.revokeObjectURL(this._imgObjURL);
+      this._imgObjURL = null;
+    }
+  }
 };
 
 export default imgLoader;
