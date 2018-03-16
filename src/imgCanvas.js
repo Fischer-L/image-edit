@@ -23,38 +23,41 @@ const imgCanvas = {
   setImg(sourceImg) {
     console.log("TMP> setImg", sourceImg);
 
-    let width = sourceImg.naturalWidth;
-    let height = sourceImg.naturalHeight;
+    let srcWidth = sourceImg.naturalWidth;
+    let srcHeight = sourceImg.naturalHeight;
 
-    let dstWidth = width;
-    let dstHeight = height;
+    let dstWidth = srcWidth;
+    let dstHeight = srcHeight;
     if (dstWidth > this.MAX_SIZE) {
       dstWidth = this.MAX_SIZE;
-      dstHeight = Math.floor(height * dstWidth / width);
+      dstHeight = Math.floor(srcHeight * dstWidth / srcWidth);
     }
     if (dstHeight > this.MAX_SIZE) {
       dstHeight = this.MAX_SIZE;
-      dstWidth = Math.floor(width * dstHeight / height)
+      dstWidth = Math.floor(srcWidth * dstHeight / srcHeight);
     }
 
-    this._source = {
-      img: sourceImg,
-      width,
-      height,
+    let dimension = {
+      srcX: 0,
+      srcY: 0,
+      srcWidth,
+      srcHeight,
       dstWidth,
       dstHeight,
     };
-    this._drawCanvas(sourceImg, this._source);
+    this._drawCanvas(sourceImg, dimension);
     this._outputImg.src = this._cvs.toDataURL();
   },
 
-  _drawCanvas(img, sizes, filter) {
+  _drawCanvas(img, dimension, filter) {
     let {
-      width,
-      height,
+      srcX,
+      srcY,
+      srcWidth,
+      srcHeight,
       dstWidth,
       dstHeight,
-    } = sizes;
+    } = dimension;
 
     this._ctx.clearRect(0, 0, this._cvs.width, this._cvs.height);
     this._cvs.width = dstWidth;
@@ -63,10 +66,10 @@ const imgCanvas = {
     if (filter) {
       this._ctx.filter = filter;
     }
-    
+    console.log("TMp> _drawCanvas", img.src);
     this._ctx.drawImage(img, 
       // The source dimesion
-      0, 0, width, height, 
+      srcX, srcY, srcWidth, srcHeight, 
       // The destination dimension
       0, 0, dstWidth, dstHeight);
   },
@@ -79,6 +82,29 @@ const imgCanvas = {
     this._drawCanvas(this._outputImg, this._source, filter);
   },
 
+
+  /**
+   * @param range {Array} Shall be [lowerX, upperX, lowerY, upperY].
+   *                           For example [0.3, 0.6, 0.3, 0.6] means
+   *                           retain the area of 30% ~ 60% on the x axis and
+   *                           30% ~ 60% on the y axis.
+   */
+  cropImg(range) {
+    let [lowerX, upperX, lowerY, upperY] = range;
+    let totalWidth = this._outputImg.naturalWidth;
+    let totalHeight = this._outputImg.naturalHeight;
+    let dimension = {
+      srcX: Math.floor(totalWidth * lowerX),
+      srcY: Math.floor(totalHeight * lowerY),
+      srcWidth: Math.floor(totalWidth * (upperX - lowerX)),
+      srcHeight: Math.floor(totalHeight * (upperY - lowerY))
+    };
+    dimension.dstWidth = dimension.srcWidth;
+    dimension.dstHeight = dimension.srcHeight;
+    this._drawCanvas(this._outputImg, dimension);
+    this._outputImg.src = this._cvs.toDataURL();
+  },
+
   /**
    * @param focusRange {Array} Shall be [lowerX, upperX, lowerY, upperY].
    *                           For example [0.3, 0.6, 0.3, 0.6] means
@@ -86,7 +112,6 @@ const imgCanvas = {
    *                           30% ~ 60% on the y axis.
    */
   applyDOF(focusRange) {
-    console.log("TMP> applyDOF", focusRange);
     // Always apply the css filter effects first
     // so we got them blended into our blur effect
     this._applyCSSFilter();

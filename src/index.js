@@ -13,9 +13,23 @@ const imgEditor = {
     imgCanvas.init(this._outputImg);
     imgLoader.init(this._imgEditor, this);
 
+    this._imgEditor.addEventListener("click", e => this.onClick(e));
+
     let tmp_selectBtn = this._imgEditor.querySelector("#select-btn");
     tmp_selectBtn.addEventListener("click", e => this._startSelectImgRange());
     window._imgEditor = imgEditor;
+  },
+
+  onClick(e) {
+    switch (e.target.id) {
+      case "effect-crop-btn":
+        this.cropImg();
+        return;
+
+      case "effect-dof-btn":
+        this.applyDOF()
+        return;
+    }
   },
 
   onImgLoaded(img) {
@@ -24,6 +38,20 @@ const imgEditor = {
     this._outputImg.classList.remove("no-display");
 
     window._imgCanvas = imgCanvas;
+  },
+
+  async cropImg() {
+    let range = await this._selectImgRange();
+    if (range) {
+      imgCanvas.cropImg(range);
+    }
+  },
+
+  async applyDOF() {
+    let focusRange = await this._selectImgRange();
+    if (focusRange) {
+      imgCanvas.applyDOF(focusRange);
+    }
   },
 
   _showCoverImg(src, w, h) {
@@ -37,20 +65,24 @@ const imgEditor = {
     this._coverArea.classList.add("no-display");
   },
 
-  _startSelectImgRange() {
+  async _selectImgRange() {
     if (this._pickSelectRangeOrign) {
       return; // Already start
     }
+    
+    let pos = await new Promise(resolve => {
+      let totalWidth = this._outputImg.width;
+      let totalHeight = this._outputImg.height;
+      this._pickSelectRangeOrign = e => {
+        this._coverArea.removeEventListener("mousedown", this._pickSelectRangeOrign);
+        resolve([e.offsetX, e.offsetY, totalWidth, totalHeight])
+      };
+      this._coverArea.addEventListener("mousedown", this._pickSelectRangeOrign);
+      this._coverImg.style.clipPath = "polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)";
+      this._showCoverImg(this._outputImg.src, totalWidth, totalHeight);
+    });
 
-    let totalWidth = this._outputImg.width;
-    let totalHeight = this._outputImg.height;
-    this._pickSelectRangeOrign = e => {
-      this._coverArea.removeEventListener("mousedown", this._pickSelectRangeOrign);
-      this._selectImgRangeOnMousemove(e.offsetX, e.offsetY, totalWidth, totalHeight);
-    };
-    this._coverArea.addEventListener("mousedown", this._pickSelectRangeOrign);
-    this._coverImg.style.clipPath = "polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)";
-    this._showCoverImg(this._outputImg.src, totalWidth, totalHeight);
+    return this._detectRangeOnMousemove(...pos);
   },
 
   /**
@@ -59,33 +91,34 @@ const imgEditor = {
    * @param totalWidth {Number} the total width of the image
    * @param totalHeight {Number} the total height of the image
    */
-  _selectImgRangeOnMousemove(originX, originY, totalWidth, totalHeight) {
+  _detectRangeOnMousemove(originX, originY, totalWidth, totalHeight) {
     if (this._drawImgSelectRange) {
       return; //Already drawing
     }
-    
-    this._drawImgSelectRange = e => {
-      let range = this._computeSelectRange(
-        totalWidth, totalHeight, [originX, originY], [e.offsetX, e.offsetY]);
-      let [lowerX, upperX, lowerY, upperY] = range.map(bound => bound * 100 + "%");
-      this._coverImg.style.clipPath =
-        `polygon(${lowerX} ${lowerY}, ${upperX} ${lowerY}, ${upperX} ${upperY}, ${lowerX} ${upperY})`;
-    };
-    this._coverArea.addEventListener("mousemove", this._drawImgSelectRange);
-    
-    this._endSelectImgRange = e => {
-      this._coverArea.removeEventListener("mousemove", this._drawImgSelectRange);
-      this._coverArea.removeEventListener("mouseup", this._endSelectImgRange);
-      this._pickSelectRangeOrign = this._drawImgSelectRange = this._endSelectImgRange = null;
 
-      let focusRange = this._computeSelectRange(
-        totalWidth, totalHeight, [originX, originY], [e.offsetX, e.offsetY]);
-      imgCanvas.applyDOF(focusRange);
+    return new Promise(resolve => {
+      this._drawImgSelectRange = e => {
+        let range = this._computeSelectRange(
+          totalWidth, totalHeight, [originX, originY], [e.offsetX, e.offsetY]);
+        let [lowerX, upperX, lowerY, upperY] = range.map(bound => bound * 100 + "%");
+        this._coverImg.style.clipPath =
+          `polygon(${lowerX} ${lowerY}, ${upperX} ${lowerY}, ${upperX} ${upperY}, ${lowerX} ${upperY})`;
+      };
+      this._coverArea.addEventListener("mousemove", this._drawImgSelectRange);
       
-      // Alwasy hide the cover area in the end so as to keep the mouse position correct
-      this._hideCoverImg();
-    };
-    this._coverArea.addEventListener("mouseup", this._endSelectImgRange);
+      this._endSelectImgRange = e => {
+        this._coverArea.removeEventListener("mousemove", this._drawImgSelectRange);
+        this._coverArea.removeEventListener("mouseup", this._endSelectImgRange);
+        this._pickSelectRangeOrign = this._drawImgSelectRange = this._endSelectImgRange = null;
+
+        let range = this._computeSelectRange(
+          totalWidth, totalHeight, [originX, originY], [e.offsetX, e.offsetY]);
+        // Alwasy hide the cover area in the end so as to keep the mouse position correct
+        this._hideCoverImg();
+        resolve(range);
+      };
+      this._coverArea.addEventListener("mouseup", this._endSelectImgRange);
+    });
   },
 
   _computeSelectRange(totalWidth, totalHeight, startPos, endPos) {
