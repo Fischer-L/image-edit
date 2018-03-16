@@ -33,6 +33,10 @@ const imgEditor = {
   },
 
   onClick(e) {
+    if (!this._sourceImg) {
+      return;
+    }
+
     switch (e.target.id) {
       case "effect-crop":
         this._selectImgRange(range => this.cropImg(range));
@@ -49,6 +53,10 @@ const imgEditor = {
   },
 
   onChange(e) {
+    if (!this._sourceImg) {
+      return;
+    }
+
     switch (e.target.id) {
       case "effect-sepia":
       case "effect-grayscale":
@@ -58,6 +66,10 @@ const imgEditor = {
   },
 
   onMousedown(e) {
+    if (!this._sourceImg) {
+      return;
+    }
+    
     switch (e.target.id) {
       case "effect-sepia":
       case "effect-grayscale":

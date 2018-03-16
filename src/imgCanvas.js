@@ -111,6 +111,10 @@ const imgCanvas = {
    * @param lv {Number} the effect level from 0 ~ 1
    */
   applyGrayScale(lv) {
+    if (!this._sourceImg) {
+      return;
+    }
+
     lv = lv * 100;
     if (lv != this._cssFilters.get("sepia")) {
       this._cssFilters.set("grayscale", lv);
@@ -122,6 +126,10 @@ const imgCanvas = {
    * @param lv {Number} the effect level from 0 ~ 1
    */
   applySepia(lv) {
+    if (!this._sourceImg) {
+      return;
+    }
+
     lv = lv * 100;
     if (lv != this._cssFilters.get("sepia")) {
       this._cssFilters.set("sepia", lv);
@@ -136,6 +144,10 @@ const imgCanvas = {
    *                           30% ~ 60% on the y axis.
    */
   cropImg(range) {
+    if (!this._sourceImg) {
+      return;
+    }
+
     let [lowerX, upperX, lowerY, upperY] = range;
     let totalWidth = this._outputImg.naturalWidth;
     let totalHeight = this._outputImg.naturalHeight;
@@ -158,6 +170,10 @@ const imgCanvas = {
    *                           30% ~ 60% on the y axis.
    */
   applyDOF(focusRange) {
+    if (!this._sourceImg) {
+      return;
+    }
+    
     let imgData = this._ctx.getImageData(0, 0, this._cvs.width, this._cvs.height);
 
     if (!focusRange) {
