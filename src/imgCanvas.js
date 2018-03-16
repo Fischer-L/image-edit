@@ -94,6 +94,17 @@ const imgCanvas = {
   /**
    * @param lv {Number} the effect level from 0 ~ 1
    */
+  applyGrayScale(lv) {
+    lv = lv * 100;
+    if (lv != this._cssFilters.get("sepia")) {
+      this._cssFilters.set("grayscale", lv);
+      this._applyCSSFilter();
+    }
+  },
+
+  /**
+   * @param lv {Number} the effect level from 0 ~ 1
+   */
   applySepia(lv) {
     lv = lv * 100;
     if (lv != this._cssFilters.get("sepia")) {

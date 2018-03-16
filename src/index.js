@@ -47,6 +47,7 @@ const imgEditor = {
   onChange(e) {
     switch (e.target.id) {
       case "effect-sepia":
+      case "effect-grayscale":
         this._applyFilterChange(e.target);
         return;
     }
@@ -55,6 +56,7 @@ const imgEditor = {
   onMousedown(e) {
     switch (e.target.id) {
       case "effect-sepia":
+      case "effect-grayscale":
         this._trackFilterChange(e.target);
         return;
     }
@@ -72,6 +74,10 @@ const imgEditor = {
     switch (input.id) {
       case "effect-sepia":
         this.applySepia(input.value);
+        return;
+
+      case "effect-grayscale":
+        this.applyGrayScale(input.value);
         return;
     }
   },
@@ -196,6 +202,10 @@ const imgEditor = {
   applySepia(lv) {
     window.requestAnimationFrame(() => this._imgCanvas.applySepia(lv));
   },
+
+  applyGrayScale(lv) {
+    window.requestAnimationFrame(() => this._imgCanvas.applyGrayScale(lv));
+  }
 };
 
 imgEditor.init(imgCanvas, imgLoader);
