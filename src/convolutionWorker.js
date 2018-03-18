@@ -107,6 +107,5 @@ const convolutor = {
 };
 
 onmessage = e => {
-  console.log("In Worker");
   postMessage(convolutor.applyDOF(...e.data));
 };

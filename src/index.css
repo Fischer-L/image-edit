@@ -96,6 +96,10 @@ html {
   align-items: center;
 }
 
+#img-panel-cover-img {
+  user-select: none;
+}
+
 #img-panel__cover_area.loading-img > #img-panel-cover-img {
   width: 33px;
   animation-name: loadingSpin;
