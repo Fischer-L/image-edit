@@ -212,22 +212,32 @@ const imgCanvas = {
 
     // Notice 1: A focus range in the depth of field effect is the convolution-skipped range.
     //           Because we don't want it to be blur!
-    // Notice 2: Below we do 2-stage convolution so a more smooth depth of field effect.
+    // Notice 2: Below we do multi-stage convolutions and the convolution order matters.
+    //           Each convolution will blur the previous one so a more smooth depth of field effect.
     let [lowerX, upperX, lowerY, upperY] = focusRange;
     let effects = [
       {
-        kernel: this.BLUR_KERNEL_BY_3,
-        skipRange: { lowerY, upperY, lowerX, upperX }
-      },
-      {
-        kernel: this.BLUR_KERNEL_BY_5,
+        kernel: this.BLUR_KERNEL_BY_5_SIGMA_12,
         skipRange: { 
           lowerY: lowerY / 2,
           upperY: (1 + upperY) / 2,
           lowerX: lowerX / 2,
           upperX: (1 + upperX) / 2,
         }
-      }
+      },
+      {
+        kernel: this.BLUR_KERNEL_BY_3_SIGMA_12,
+        skipRange: { 
+          lowerY: lowerY * 0.8,
+          upperY: upperY + (1 - upperY) * 0.2,
+          lowerX: lowerX * 0.8,
+          upperX: upperX + (1 - upperX) * 0.2,
+        }
+      },
+      {
+        kernel: this.BLUR_KERNEL_BY_3_SIGMA_55,
+        skipRange: { lowerY, upperY, lowerX, upperX }
+      },
     ];
     let newImgData = imgData;
     effects.forEach(effect => {
@@ -238,18 +248,24 @@ const imgCanvas = {
     this._drawToImg(this._cvs.width, this._cvs.height);
   },
 
-  BLUR_KERNEL_BY_5: [
-    0.023528, 0.033969, 0.038393, 0.033969, 0.023528,
-    0.033969, 0.049045, 0.055432, 0.049045, 0.033969,
-    0.038393, 0.055432, 0.062651, 0.055432, 0.038393,
-    0.033969, 0.049045, 0.055432, 0.049045, 0.033969,
-    0.023528, 0.033969, 0.038393, 0.033969, 0.023528,
+  BLUR_KERNEL_BY_5_SIGMA_12: [
+    0.008173, 0.021861, 0.030337, 0.021861, 0.008173,
+    0.021861, 0.058473, 0.081144, 0.058473, 0.021861,
+    0.030337, 0.081144, 0.112606, 0.081144, 0.030337,
+    0.021861, 0.058473, 0.081144, 0.058473, 0.021861,
+    0.008173, 0.021861, 0.030337, 0.021861, 0.008173,
+  ],
+  
+  BLUR_KERNEL_BY_3_SIGMA_12: [
+    0.087133, 0.120917, 0.087133,
+    0.120917, 0.167799, 0.120917,
+    0.087133, 0.120917, 0.087133,
   ],
 
-  BLUR_KERNEL_BY_3: [
-    0.095332, 0.118095, 0.095332,
-    0.118095, 0.146293, 0.118095,
-    0.095332, 0.118095, 0.095332,
+  BLUR_KERNEL_BY_3_SIGMA_55: [
+    0.032258, 0.115089, 0.032258,
+    0.115089, 0.410612, 0.115089,
+    0.032258, 0.115089, 0.032258,
   ],
 
   _blurConvolute(imgData, kernel, skipRange) {
