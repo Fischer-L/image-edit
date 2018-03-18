@@ -145,16 +145,24 @@ const imgEditor = {
     input.addEventListener("mouseup", this._stopTrackFilterChange);
   },
 
-  _showCoverImg(img, w, h) {
-    this._coverImg.src = img.src;
-    this._coverImg.style.width = this._coverArea.style.width = w + "px";
-    this._coverImg.style.height = this._coverArea.style.height = h + "px";
-    this._coverArea.style.clipPath = img.style.clipPath;
-    this._coverArea.classList.remove("no-display");
+  _showCoverImg(coverImg, coverArea) {
+    this._coverImg.src = coverImg.src;
+    this._coverImg.style.width = coverImg.width ? coverImg.width + "px" : "";
+    this._coverImg.style.height = coverImg.height ? coverImg.height + "px" : "";
+    this._coverImg.style.clipPath = coverImg.clipPath || "";
+
+    this._coverArea.style.width = coverArea.width ? coverArea.width + "px" : "";
+    this._coverArea.style.height = coverArea.height ? coverArea.height + "px" : "";
+    this._coverArea.style.clipPath = coverArea.clipPath || "";
+    let className = "img-panel--center ";
+    if (coverArea.className) {
+      className += coverArea.className;
+    }
+    this._coverArea.className = className;
   },
 
   _hideCoverImg() {
-    this._coverArea.classList.add("no-display");
+    this._coverArea.className = "no-display";
   },
 
   async _selectImgRange(onSelect) {
@@ -182,8 +190,16 @@ const imgEditor = {
         resolve([e.offsetX, e.offsetY, totalWidth, totalHeight])
       };
       this._coverArea.addEventListener("mousedown", this._pickSelectRangeOrign);
-      this._coverImg.style.clipPath = "polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)";
-      this._showCoverImg(this._outputImg, totalWidth, totalHeight);
+      this._showCoverImg({
+        src: this._outputImg.src,
+        clipPath: "polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)",
+        width: totalWidth,
+        height: totalHeight
+      }, {
+        clipPath: this._outputImg.style.clipPath,
+        width: totalWidth,
+        height: totalHeight
+      });
     });
 
     return this._detectRangeOnMousemove(...pos);
@@ -244,7 +260,17 @@ const imgEditor = {
   },
 
   applyDOF(range) {
-    window.requestAnimationFrame(() => this._imgCanvas.applyDOF(range));
+    window.requestAnimationFrame(async () => {
+      this._showCoverImg({
+        src: "./src/loading.svg",
+      }, {
+        className: "loading-img",
+        width: this._outputImg.width,
+        height: this._outputImg.height
+      });
+      await this._imgCanvas.applyDOF(range);
+      this._hideCoverImg();
+    });
   },
 
   applySepia(lv) {
