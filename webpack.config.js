@@ -3,6 +3,7 @@ var path = require("path");
 module.exports = {
   entry: {
    index: "./src/index.js",
+   "convolutionWorker": "./src/convolutionWorker.js"
   },
   
   output: {
