@@ -116,6 +116,10 @@ const imgCanvas = {
   },
 
   _applyCSSFilter() {
+    // We go css filters first instead of canvas filters, why?
+    // This is for the performance. Utilize browsers' css styling optimization.
+    // When user wants to download the filtered image,
+    // then, we combine these filter effects into our canvas once.
     if (this._cssFilters.size) {
       let rules = [];
       this._cssFilters.forEach((lv, effect) => {
@@ -136,7 +140,7 @@ const imgCanvas = {
     }
 
     lv = lv * 100;
-    if (lv != this._cssFilters.get("sepia")) {
+    if (lv != this._cssFilters.get("grayscale")) {
       this._cssFilters.set("grayscale", lv);
       this._applyCSSFilter();
     }
