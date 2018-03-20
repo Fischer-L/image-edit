@@ -29,7 +29,7 @@
 
 4. 執行 `npm start` 或 `yarn start`
 
-5. 開啟 Firefox/Chrome 載入 `localhost:9000`
+5. 開啟 Firefox/Chrome 載入 `localhost:3000`
 
 6. repo 目錄下 images 目錄內有 sample 圖片以及處理過的 demo 圖片可供使用，例如
   
