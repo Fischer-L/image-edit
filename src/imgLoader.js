@@ -64,7 +64,7 @@ const imgLoader  = {
 
   _handleInputFromURL(url) {
     // Check https or http or base64 urls
-    let reg = /https:\/\/|http:\/\/|data:image\/png;base64/;
+    let reg = /https:\/\/|http:\/\/|data:image\/.*;base64/;
     if (!url || url.search(reg) !== 0) {
       return;
     }
