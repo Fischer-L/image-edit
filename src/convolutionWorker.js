@@ -7,21 +7,21 @@ const convolutor = {
     let [lowerX, upperX, lowerY, upperY] = focusRange;
     let effects = [
       {
-        kernel: this.BLUR_KERNEL_BY_5_SIGMA_12,
-        skipRange: { 
-          lowerY: lowerY / 2,
-          upperY: (1 + upperY) / 2,
-          lowerX: lowerX / 2,
-          upperX: (1 + upperX) / 2,
+        kernel: this.BLUR_KERNEL_BY_5_SIGMA_15,
+        skipRange: {
+          lowerY: lowerY * 0.7,
+          upperY: upperY + (1 - upperY) * 0.3,
+          lowerX: lowerX * 0.7,
+          upperX: upperX + (1 - upperX) * 0.3,
         }
       },
       {
-        kernel: this.BLUR_KERNEL_BY_3_SIGMA_12,
-        skipRange: { 
-          lowerY: lowerY * 0.8,
-          upperY: upperY + (1 - upperY) * 0.2,
-          lowerX: lowerX * 0.8,
-          upperX: upperX + (1 - upperX) * 0.2,
+        kernel: this.BLUR_KERNEL_BY_3_SIGMA_15,
+        skipRange: {
+          lowerY: lowerY * 0.9,
+          upperY: upperY + (1 - upperY) * 0.1,
+          lowerX: lowerX * 0.9,
+          upperX: upperX + (1 - upperX) * 0.1,
         }
       },
       {
@@ -35,19 +35,19 @@ const convolutor = {
     });
     return newImgData;
   },
-
-  BLUR_KERNEL_BY_5_SIGMA_12: [
-    0.008173, 0.021861, 0.030337, 0.021861, 0.008173,
-    0.021861, 0.058473, 0.081144, 0.058473, 0.021861,
-    0.030337, 0.081144, 0.112606, 0.081144, 0.030337,
-    0.021861, 0.058473, 0.081144, 0.058473, 0.021861,
-    0.008173, 0.021861, 0.030337, 0.021861, 0.008173,
-  ],
   
-  BLUR_KERNEL_BY_3_SIGMA_12: [
-    0.087133, 0.120917, 0.087133,
-    0.120917, 0.167799, 0.120917,
-    0.087133, 0.120917, 0.087133,
+  BLUR_KERNEL_BY_5_SIGMA_15: [
+    0.015026, 0.028569, 0.035391, 0.028569, 0.015026,
+    0.028569, 0.054318, 0.067288, 0.054318, 0.028569,
+    0.035391, 0.067288, 0.083355, 0.067288, 0.035391,
+    0.028569, 0.054318, 0.067288, 0.054318, 0.028569,
+    0.015026, 0.028569, 0.035391, 0.028569, 0.015026,
+  ],
+
+  BLUR_KERNEL_BY_3_SIGMA_15: [
+    0.095332, 0.118095, 0.095332,
+    0.118095, 0.146293, 0.118095,
+    0.095332, 0.118095, 0.095332,
   ],
 
   BLUR_KERNEL_BY_3_SIGMA_55: [
