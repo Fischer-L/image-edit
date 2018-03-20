@@ -16,23 +16,18 @@ const imgLoader  = {
     imgEditor.addEventListener("click", e => this._handleClick(e));
 
     this._inputFile.addEventListener("change", e => {
-      console.log("TMP> Onchange");
       this._handleInputFromFile(e);
     });
 
     this._imgDropArea.addEventListener("dragover", e => {
-      console.log("TMP> Ondragover");
       e.stopPropagation();
       e.preventDefault();
     });
     this._imgDropArea.addEventListener("drop", e => {
-      console.log("TMP> OnDrop");
       e.stopPropagation();
       e.preventDefault();
       this._handleInputFromFile(e);
     });
-
-    console.log("TMP> imgLoader init");
   },
 
   _handleClick(e) {
@@ -51,7 +46,6 @@ const imgLoader  = {
   _createImg(url, isCORS) {
     let img = new Image();
     img.onload = () => {
-      console.log("TMP> Image Created");
       img.onload = null;
       // Expose this CORS info to let outside know.
       // If the image is from the internet,
