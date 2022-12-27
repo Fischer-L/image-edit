@@ -48,10 +48,4 @@
   - 處理後
   
     <img width="300" src="./images/processed/Eiffel_tower_processed.jpg">
-
-7. 如遇到設定失敗問題，以下是本專案開發環境供參考:
-  - MAC OS 10.12.6
-  - node v9.4.0
-  - yarn 1.3.2
-  - npm 5.6.0
   
