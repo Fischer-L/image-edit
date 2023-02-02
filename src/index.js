@@ -3,6 +3,9 @@ import "./index.css";
 import imgLoader from "./imgLoader";
 import imgCanvas from "./imgCanvas";
 
+import loadingSVG from "./loading.svg";
+
+
 const imgEditor = {
   init(imgCanvas, imgLoader) {
     this._imgEditor = document.querySelector("#img-editor");
@@ -41,6 +44,11 @@ const imgEditor = {
     } else {
       dofControl.classList.remove("no-display");
       downloadControl.classList.remove("no-display");
+    }
+
+    const urlBtn = document.querySelector("#url-input-btn");
+    if (ENV_DISABLE_URL_INPUT && urlBtn) {
+      urlBtn.remove();
     }
   },
 
@@ -262,7 +270,7 @@ const imgEditor = {
   applyDOF(range) {
     window.requestAnimationFrame(async () => {
       this._showCoverImg({
-        src: "./src/loading.svg",
+        src: loadingSVG,
       }, {
         className: "loading-img",
         width: this._outputImg.width,
